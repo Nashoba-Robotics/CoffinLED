@@ -58,40 +58,78 @@ public class Frame extends JFrame implements WindowListener
     }
 
     private String currentState = "off";
+    private boolean connected = false;
+
     private void setupNetworkListener()
     {
-        Network.getInstance().connect();
-        Network.getInstance().setOnMessageReceivedListener(new Network.OnMessageReceivedListener()
+        Network.getInstance().setConnectionListener(new Network.ConnectionListener()
         {
             @Override
-            public void onMessageReceived(String key, Object value)
+            public void onConnectionStateChanged(boolean state)
             {
-                try
+                connected = state;
+                if(state)
                 {
-                    currentState = Network.getInstance().getString("ArduinoState");
+                    sendConnectedCommand();
                 }
-                catch (Exception e)
+                else
                 {
+                    sendDisconnectedCommand();
+                }
+            }
+        });
+        Network.getInstance().setOnMessageReceivedListener(new Network.OnMessageReceivedListener() {
+            @Override
+            public void onMessageReceived(String key, Object value) {
+                try {
+                    currentState = Network.getInstance().getString("ArduinoState");
+                } catch (Exception e) {
 
                 }
 
                 int arduinoArgument = 0;
-                try
-                {
-                    arduinoArgument = (int) ((double)Network.getInstance().getNumber("ArduinoArgument"));
-                }
-                catch (Exception e)
-                {
+                try {
+                    arduinoArgument = (int) ((double) Network.getInstance().getNumber("ArduinoArgument"));
+                } catch (Exception e) {
 
                 }
-                if(value.equals("Score"))
-                    Arduino.getInstance().sendMessage("3 0:");
-                else if(value.equals("Off"))
-                    Arduino.getInstance().sendMessage("0 0:");
-                else if(currentState.equals("Countdown"))
-                    Arduino.getInstance().sendMessage("2 " + arduinoArgument + ":");
+                if (currentState.equals("Score"))
+                    sendScoreCommand();
+                else if (currentState.equals("Off"))
+                {
+                    sendConnectedCommand();
+                }
+                else if (currentState.equals("Countdown"))
+                    sendCountdownCommand(arduinoArgument);
             }
         });
+
+        Network.getInstance().connect();
+    }
+
+    private void sendScoreCommand()
+    {
+        Arduino.getInstance().sendMessage("3 0:");
+    }
+
+    private void sendOffCommand()
+    {
+        Arduino.getInstance().sendMessage("0 0:");
+    }
+
+    private void sendCountdownCommand(int amount)
+    {
+        Arduino.getInstance().sendMessage("2 " + amount + ":");
+    }
+
+    public void sendConnectedCommand()
+    {
+        Arduino.getInstance().sendMessage("5 0:");
+    }
+
+    public void sendDisconnectedCommand()
+    {
+        Arduino.getInstance().sendMessage("4 0:");
     }
 
     @Override

@@ -1,6 +1,8 @@
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
 import edu.wpi.first.wpilibj.tables.*;
 
+import java.sql.Connection;
+
 /**
  * @author co1in
  */
@@ -25,6 +27,17 @@ public class Network implements ITableListener
         NetworkTable.setIPAddress("10.17.68.2");
     }
 
+    public interface ConnectionListener
+    {
+        public void onConnectionStateChanged(boolean state);
+    }
+
+    private ConnectionListener connectionListener;
+    public void setConnectionListener(ConnectionListener listener)
+    {
+        this.connectionListener = listener;
+    }
+
     public void connect()
     {
         new Thread(new Runnable()
@@ -42,12 +55,16 @@ public class Network implements ITableListener
                     public void connected(IRemote iRemote)
                     {
                         Frame.getInstance().setTitle("Coffin Controller - Connected to Field");
+                        if(connectionListener != null)
+                            connectionListener.onConnectionStateChanged(true);
                     }
 
                     @Override
                     public void disconnected(IRemote iRemote)
                     {
                         Frame.getInstance().setTitle("Coffin Controller - Not Connected to Field");
+                        if(connectionListener != null)
+                            connectionListener.onConnectionStateChanged(false);
                     }
                 }, true);
             }

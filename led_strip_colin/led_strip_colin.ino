@@ -9,6 +9,8 @@ int STATE_OFF = 0;
 int STATE_RAINBOW = 1;
 int STATE_SPLIT_STRIP = 2;
 int STATE_SCORE_YO = 3;
+int STATE_DISCONNECTED = 4;
+int STATE_CONNECTED = 5;
 
 int dataPin = 4;
 int clockPin = 2;
@@ -59,6 +61,14 @@ void loop()
   {
    scoreStrobe(); 
   }
+  else if(state == STATE_DISCONNECTED)
+  {
+   disconnectedLight(); 
+  }
+  else if(state == STATE_CONNECTED)
+  {
+    connectedLight();
+  }
 }
 
 uint16_t rainbowState = 0;
@@ -84,6 +94,30 @@ void setStrip(uint32_t color)
   {
     strip.setPixelColor(i, color);
   }
+  strip.show();
+}
+
+void disconnectedLight()
+{
+  uint16_t i;
+  for(i = 0; i < strip.numPixels(); i++)
+  {
+    strip.setPixelColor(i, strip.Color(0, 0, 0)); 
+  }
+  strip.setPixelColor(0, strip.Color(127, 0, 0));
+  strip.setPixelColor(strip.numPixels()-1, strip.Color(127, 0, 0));
+  strip.show();
+}
+
+void connectedLight()
+{
+  uint16_t i;
+  for(i = 0; i < strip.numPixels(); i++)
+  {
+    strip.setPixelColor(i, strip.Color(0, 0, 0)); 
+  }
+  strip.setPixelColor(0, strip.Color(0, 127, 0));
+  strip.setPixelColor(strip.numPixels()-1, strip.Color(0, 127, 0));
   strip.show();
 }
 
@@ -142,7 +176,7 @@ void scoreStrobe()
   }
   
   scoreStrobeCount++;
-  if(scoreStrobeCount > 75)
+  if(scoreStrobeCount > 50)
   {
      scoreState = -scoreState;
      scoreStrobeCount = 0;
