@@ -7,6 +7,8 @@ int arg1 = 0;
 
 int STATE_OFF = 0;
 int STATE_RAINBOW = 1;
+int STATE_SPLIT_STRIP = 2;
+int STATE_SCORE_YO = 3;
 
 int dataPin = 4;
 int clockPin = 2;
@@ -49,6 +51,14 @@ void loop()
   {
     rainbowCycle(arg1);
   }
+  else if(state == STATE_SPLIT_STRIP)
+  {
+   splitStrip(arg1); 
+  }
+  else if(state == STATE_SCORE_YO)
+  {
+   scoreStrobe(); 
+  }
 }
 
 uint16_t rainbowState = 0;
@@ -75,6 +85,68 @@ void setStrip(uint32_t color)
     strip.setPixelColor(i, color);
   }
   strip.show();
+}
+
+void splitStrip(int amount)
+{
+  int i;
+  uint32_t color;
+  if(amount <= 5)
+  {
+   color = strip.Color(127, 0, 0); 
+  }
+  else if(amount <= 10)
+  {
+   color = strip.Color(127, 127, 0); 
+  }
+  else
+  {
+   color = strip.Color(127, 127, 127); 
+  }
+  
+  for(i = 0; i < amount; i++)
+  {
+    strip.setPixelColor(i, color);
+  }
+  for(i = amount; i < strip.numPixels()-amount; i++)
+  {
+   strip.setPixelColor(i, strip.Color(0, 0, 0));
+  } 
+  for(i = strip.numPixels(); i > strip.numPixels()-amount-1; i--)
+  {
+   strip.setPixelColor(i, color); 
+  }
+  strip.show();
+}
+
+int scoreStrobeCount = 0;
+int scoreState = 1;
+void scoreStrobe()
+{
+  int i;
+  if(scoreState == 1)
+  {
+    for(i = 0; i < strip.numPixels(); i++)
+    {
+     strip.setPixelColor(i, strip.Color(0, 127, 0)); 
+    }
+    strip.show();
+  }
+  else
+  {
+    for(i = 0; i < strip.numPixels(); i++)
+    {
+     strip.setPixelColor(i, strip.Color(0, 0, 0)); 
+    }
+    strip.show();
+  }
+  
+  scoreStrobeCount++;
+  if(scoreStrobeCount > 75)
+  {
+     scoreState = -scoreState;
+     scoreStrobeCount = 0;
+  }
 }
 
 uint32_t Wheel(uint16_t WheelPos)
