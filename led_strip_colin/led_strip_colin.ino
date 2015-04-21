@@ -2,6 +2,12 @@
 #include <LPD8806.h>
 
 
+int state = 0;
+int arg1 = 0;
+
+int STATE_OFF = 0;
+int STATE_RAINBOW = 1;
+
 int dataPin = 4;
 int clockPin = 2;
 LPD8806 strip = LPD8806(32, dataPin, clockPin);
@@ -17,6 +23,7 @@ void setup()
   strip.begin();
 
   Serial.begin(9600);
+  Serial.println("Waiting for Commands");
 
   // Update the strip, to start they are all 'off'
   strip.show();
@@ -24,31 +31,50 @@ void setup()
 
 void loop() 
 {
-  /* put your main code here, to run repeatedly:
+  //put your main code here, to run repeatedly:
   if(Serial.available() > 0)
   {
-    String s = Serial.readStringUntil('\n');
+    String inputString = Serial.readStringUntil('\n');
     cmd = inputString.substring(0, inputString.indexOf(delimiter1)).toInt();
     data1 = inputString.substring(inputString.indexOf(delimiter1) + 1, inputString.indexOf(delimiter2)).toInt();
-    
-  }*/
-  rainbowCycle(0);
+    state = cmd;
+    arg1 = data1;
+  }
+  
+  if(state == STATE_OFF)
+  {
+    setStrip(strip.Color(0, 0, 0));
+  }
+  else if(state == STATE_RAINBOW)
+  {
+    rainbowCycle(arg1);
+  }
 }
 
-void rainbowCycle(uint8_t wait) {
-  uint16_t i, j;
-  
-  for (j=0; j < 384 * 5; j++) {     // 5 cycles of all 384 colors in the wheel
-    for (i=0; i < strip.numPixels(); i++) {
-      // tricky math! we use each pixel as a fraction of the full 384-color wheel
-      // (thats the i / strip.numPixels() part)
-      // Then add in j which makes the colors go around per pixel
-      // the % 384 is to make the wheel cycle around
-      strip.setPixelColor(i, Wheel( ((i * 384 / strip.numPixels()) + j) % 384) );
-    }  
-    strip.show();   // write all the pixels out
-    delay(wait);
+uint16_t rainbowState = 0;
+void rainbowCycle(uint8_t wait)
+{
+  uint16_t i;
+  for (i=0; i < strip.numPixels(); i++) {
+    // tricky math! we use each pixel as a fraction of the full 384-color wheel
+    // (thats the i / strip.numPixels() part)
+    // Then add in j which makes the colors go around per pixel
+    // the % 384 is to make the wheel cycle around
+    strip.setPixelColor(i, Wheel( ((i * 384 / strip.numPixels()) + rainbowState) % 384) );
+  } 
+  strip.show();   // write all the pixels out
+  delay(wait+1);
+  rainbowState = (rainbowState+1)%(384*5);
+}
+
+void setStrip(uint32_t color)
+{
+  uint16_t i;
+  for(i = 0; i < strip.numPixels(); i++)
+  {
+    strip.setPixelColor(i, color);
   }
+  strip.show();
 }
 
 uint32_t Wheel(uint16_t WheelPos)
