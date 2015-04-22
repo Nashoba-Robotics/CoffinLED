@@ -1,7 +1,5 @@
-import sun.nio.ch.Net;
-
 import javax.swing.*;
-import javax.swing.tree.ExpandVetoException;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -10,7 +8,7 @@ import java.awt.event.*;
  */
 public class Frame extends JFrame implements WindowListener
 {
-    static Object lock = new Object();
+    static final Object lock = new Object();
     private static Frame singleton;
     public static Frame getInstance()
     {
@@ -23,19 +21,83 @@ public class Frame extends JFrame implements WindowListener
     }
 
     JLabel status;
+    JPanel statusPanel;
+
+    JPanel mainPanel;
+    JComboBox<String> selection;
+    JCheckBox connectingToFieldBox;
+
+    private final String[] LED_OPTIONS = {"Rainbow", "Off"};
+
     private Frame()
     {
-        status = new JLabel("Not Connected");
+        setLayout(new BorderLayout());
+
+        status = new JLabel("Not Connected to LEDs");
         status.setForeground(Color.RED);
-        
-        Arduino.getInstance().setConnectionStatusListener(new Arduino.ConnectionStatusChangeListener() {
+        status.setFont(new Font("Arial", Font.PLAIN, 20));
+        statusPanel = new JPanel();
+        statusPanel.add(status);
+
+        add(statusPanel, BorderLayout.NORTH);
+
+        mainPanel = new JPanel(new GridLayout(2, 1));
+        selection = new JComboBox<String>(LED_OPTIONS);
+        selection.setSelectedIndex(0);
+        selection.addActionListener(new ActionListener()
+        {
             @Override
-            public void statusChanged() {
-                if (Arduino.getInstance().getConnectionStatus()) {
-                    status.setText("Connected!");
-                    status.setForeground(Color.GREEN);
-                } else {
-                    status.setText("Not Connected");
+            public void actionPerformed(ActionEvent e)
+            {
+                updateLEDSelection();
+            }
+        });
+        mainPanel.add(selection);
+
+        connectingToFieldBox = new JCheckBox("Connecting to Field");
+        connectingToFieldBox.setSelected(false);
+        connectingToFieldBox.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                if (connectingToFieldBox.isSelected())
+                {
+                    selection.setEnabled(false);
+                    if (connected)
+                    {
+                        sendConnectedCommand();
+                        setTitle("Coffin Controller - Connected to Field");
+                    }
+                    else
+                    {
+                        sendDisconnectedCommand();
+                        Frame.getInstance().setTitle("Coffin Controller - Not Connected to Field");
+                    }
+                } else
+                {
+                    selection.setEnabled(true);
+                    setTitle("Coffin Controller");
+                    updateLEDSelection();
+                }
+            }
+        });
+        mainPanel.add(connectingToFieldBox);
+        mainPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+        add(mainPanel, BorderLayout.CENTER);
+
+        Arduino.getInstance().setConnectionStatusListener(new Arduino.ConnectionStatusChangeListener()
+        {
+            @Override
+            public void statusChanged()
+            {
+                if (Arduino.getInstance().getConnectionStatus())
+                {
+                    status.setText("Connected to LEDs");
+                    status.setForeground(Color.GRAY);
+                } else
+                {
+                    status.setText("Not Connected to LEDs");
                     status.setForeground(Color.RED);
                 }
             }
@@ -44,21 +106,29 @@ public class Frame extends JFrame implements WindowListener
 
         setupNetworkListener();
 
-        status.setFont(new Font("Arial", Font.PLAIN, 20));
-        JPanel mainPanel = new JPanel();
-        mainPanel.add(status);
-
-        add(mainPanel, BorderLayout.CENTER);
-
-        setSize(500, 500);
+        setSize(500, 300);
         addWindowListener(this);
+        setTitle("Coffin Controller");
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setVisible(true);
     }
 
     private String currentState = "off";
     private boolean connected = false;
+
+    private void updateLEDSelection()
+    {
+        String current = (String)selection.getSelectedItem();
+        if(current.equals(LED_OPTIONS[0]))
+        {
+            sendRainbowCommand();
+        }
+        else if(current.equals(LED_OPTIONS[1]))
+        {
+            sendOffCommand();
+        }
+    }
 
     private void setupNetworkListener()
     {
@@ -68,13 +138,16 @@ public class Frame extends JFrame implements WindowListener
             public void onConnectionStateChanged(boolean state)
             {
                 connected = state;
-                if(state)
+                if(connectingToFieldBox.isSelected())
                 {
-                    sendConnectedCommand();
-                }
-                else
-                {
-                    sendDisconnectedCommand();
+                    if(state)
+                    {
+                        sendConnectedCommand();
+                    }
+                    else
+                    {
+                        sendDisconnectedCommand();
+                    }
                 }
             }
         });
@@ -115,6 +188,11 @@ public class Frame extends JFrame implements WindowListener
     private void sendOffCommand()
     {
         Arduino.getInstance().sendMessage("0 0:");
+    }
+
+    private void sendRainbowCommand()
+    {
+        Arduino.getInstance().sendMessage("1 0:");
     }
 
     private void sendCountdownCommand(int amount)

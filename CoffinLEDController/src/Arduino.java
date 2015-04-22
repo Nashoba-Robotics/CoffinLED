@@ -114,6 +114,13 @@ public class Arduino implements SerialPortEventListener
                         connected = true;
                         if(connectionListener != null)
                             connectionListener.statusChanged();
+
+                        if(!attemptedMessageSend.equals(""))
+                        {
+                            sendMessage(attemptedMessageSend);
+                            attemptedMessageSend = "";
+                        }
+
                         break;
                     }
                     catch (Exception e)
@@ -160,12 +167,18 @@ public class Arduino implements SerialPortEventListener
         // Ignore all the other eventTypes, but you should consider the other ones.
     }
 
+    private String attemptedMessageSend = "";
+
     public void sendMessage(String message)
     {
         if(connected)
         {
             output.println(message);
             output.flush();
+        }
+        else
+        {
+            attemptedMessageSend = message;
         }
     }
 
