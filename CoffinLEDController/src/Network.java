@@ -17,6 +17,7 @@ public class Network implements ITableListener
     }
 
     private NetworkTable table;
+    private NetworkTable diagram;
     private final String DASHBOARD_NAME = "SmartDashboard";
 
     private OnMessageReceivedListener listener = null;
@@ -24,7 +25,7 @@ public class Network implements ITableListener
     private Network()
     {
         NetworkTable.setClientMode();
-        NetworkTable.setIPAddress("10.17.68.2");
+        NetworkTable.setTeam(1768);
     }
 
     public interface ConnectionListener
@@ -106,7 +107,7 @@ public class Network implements ITableListener
 
     public interface OnMessageReceivedListener
     {
-        public void onMessageReceived(String key, Object value);
+        public void onMessageReceived(String key, Object value) throws Exception;
     }
 
     public NetworkTable getTable()

@@ -1,7 +1,6 @@
 #include <SPI.h>
 #include <LPD8806.h>
 
-
 int state = 0;
 int arg1 = 0;
 
@@ -12,14 +11,26 @@ int STATE_SCORE_YO = 3;
 int STATE_DISCONNECTED = 4;
 int STATE_CONNECTED = 5;
 
+int INFO_ARM_ANGLE = 0;
+int INFO_HOOD = 1;
+int INFO_ROLL_INTAKE = 2;
+int INFO_ROLL_LOADER = 3;
+int INFO_SHOOTER_MOVE = 4;
+int INFO_SHOOTER_FULL = 5;
+int INFO_BALL_INTAKE = 6;
+int INFO_BALL_LOADER = 7;
+
 int dataPin = 4;
 int clockPin = 2;
 LPD8806 strip = LPD8806(32, dataPin, clockPin);
 
 int cmd = -1;
 int data1 = -1;
-String delimiter1 = " ";
-String delimiter2 = ":";
+char delimiter1 = " "; //goes in between pieces of data
+char delimiter2 = ":"; //ends of all commands
+char delimiter3 = ">"; //begins info commands
+char delimiter4 = "["; //begins state commands
+int kind = -1; //0 is a state command, 1 is an info command
 
 void setup()
 {
@@ -35,41 +46,93 @@ void setup()
 
 void loop() 
 {
-  //put your main code here, to run repeatedly:
   if(Serial.available() > 0)
   {
-    String inputString = Serial.readStringUntil('\n');
-    cmd = inputString.substring(0, inputString.indexOf(delimiter1)).toInt();
-    data1 = inputString.substring(inputString.indexOf(delimiter1) + 1, inputString.indexOf(delimiter2)).toInt();
-    state = cmd;
+    String inputString = Serial.readStringUntil(delimiter2) += delimiter4 + delimiter3;
+    //The characters are added because the behavior of indexOf
+    //when the string doesn't contain the characters
+    //is not given by the docs
+    if(inputString.indexOf(delimiter4) > inputString.indexOf(delimiter3)) { //It's a state command
+      cmd = inputString.substring(0, inputString.indexOf(delimiter1)).toInt();
+      data1 = inputString.substring(inputString.indexOf(delimiter1) + 1, inputString.indexOf(delimiter2)).toInt();
+      kind = 0;
+      state = cmd;
+    } else { //It's an info command
+      cmd = inputString.substring(0, inputString.indexOf(delimiter3)).toInt();
+      data1 = inputString.substring(inputString.indexOf(delimiter3) + 1, inputString.indexOf(delimiter2)).toInt();
+      kind = 1;
+    }
     arg1 = data1;
   }
-  
-  if(state == STATE_OFF)
-  {
-    setStrip(strip.Color(0, 0, 0));
-  }
-  else if(state == STATE_RAINBOW)
-  {
-    rainbowCycle(arg1);
-  }
-  else if(state == STATE_SPLIT_STRIP)
-  {
-   splitStrip(arg1); 
-  }
-  else if(state == STATE_SCORE_YO)
-  {
-   scoreStrobe(); 
-  }
-  else if(state == STATE_DISCONNECTED)
-  {
-   disconnectedLight(); 
-  }
-  else if(state == STATE_CONNECTED)
-  {
-    connectedLight();
+
+
+  if(kind == 0) {
+    switch(state) {
+      case STATE_OFF:
+        setStrip(strip.Color(0, 0, 0));
+        break;
+      case STATE_RAINBOW:
+        rainbowCycle(arg1);
+        break;
+      case STATE_SPLIT_STRIP:
+        splitStrip(arg1);
+        break;
+      case STATE_SCORE_YO:
+        scoreStrobe();
+        break;
+      case STATE_DISCONNECTED:
+        disconnectedLight();
+        break;
+      case STATE_CONNECTED:
+        connectedLight();
+        break;
+    }
+  } else if(kind == 1) {
+    switch(cmd) {
+      case INFO_ARM_ANGLE:
+        armAngle(data1);
+        break;
+      case INFO_HOOD:
+        hood(data1);
+        break;
+      case INFO_ROLL_INTAKE:
+        rollIntake(data1);
+        break;
+      case INFO_ROLL_LOADER:
+        rollLoader(data1);
+        break;
+      case INFO_SHOOTER_MOVE:
+        shooterMove(data1);
+        break;
+      case INFO_SHOOTER_FULL:
+        shooterFull(data1);
+        break;
+      case INFO_BALL_INTAKE:
+        ballIntake(data1);
+        break;
+      case INFO_BALL_LOADER:
+        ballLoader(data1);
+        break;
+    }
   }
 }
+
+//TODO: Set all of these
+void armAngle(int angle) {}
+
+void hood(int angle) {}
+
+void rollIntake(int on) {}
+
+void rollLoader(int on) {}
+
+void shooterMove(int percent) {}//Percent from 1 to 100
+
+void shooterFull(int on) {}
+
+void ballIntake(int on) {}
+
+void ballLoader(int on) {}
 
 uint16_t rainbowState = 0;
 void rainbowCycle(uint8_t wait)

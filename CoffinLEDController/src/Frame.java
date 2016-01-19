@@ -1,3 +1,5 @@
+import edu.wpi.first.wpilibj.networktables.NetworkTable;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -27,6 +29,8 @@ public class Frame extends JFrame implements WindowListener
     JComboBox<String> selection;
     JCheckBox connectingToFieldBox;
 
+    private NetworkTable diagram;
+
     private final String[] LED_OPTIONS = {"Rainbow", "Off"};
 
     private Frame()
@@ -42,64 +46,47 @@ public class Frame extends JFrame implements WindowListener
         add(statusPanel, BorderLayout.NORTH);
 
         mainPanel = new JPanel(new GridLayout(2, 1));
-        selection = new JComboBox<String>(LED_OPTIONS);
+        selection = new JComboBox<>(LED_OPTIONS);
         selection.setSelectedIndex(0);
-        selection.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                updateLEDSelection();
-            }
-        });
+        selection.addActionListener(e -> updateLEDSelection());
         mainPanel.add(selection);
 
         connectingToFieldBox = new JCheckBox("Connecting to Field");
         connectingToFieldBox.setSelected(false);
-        connectingToFieldBox.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
+        connectingToFieldBox.addActionListener(e -> {
+            if (connectingToFieldBox.isSelected())
             {
-                if (connectingToFieldBox.isSelected())
+                selection.setEnabled(false);
+                if (connected)
                 {
-                    selection.setEnabled(false);
-                    if (connected)
-                    {
-                        sendConnectedCommand();
-                        setTitle("Coffin Controller - Connected to Field");
-                    }
-                    else
-                    {
-                        sendDisconnectedCommand();
-                        Frame.getInstance().setTitle("Coffin Controller - Not Connected to Field");
-                    }
-                } else
-                {
-                    selection.setEnabled(true);
-                    setTitle("Coffin Controller");
-                    updateLEDSelection();
+                    sendConnectedCommand();
+                    setTitle("Coffin Controller - Connected to Field");
                 }
+                else
+                {
+                    sendDisconnectedCommand();
+                    Frame.getInstance().setTitle("Coffin Controller - Not Connected to Field");
+                }
+            } else
+            {
+                selection.setEnabled(true);
+                setTitle("Coffin Controller");
+                updateLEDSelection();
             }
         });
         mainPanel.add(connectingToFieldBox);
         mainPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
         add(mainPanel, BorderLayout.CENTER);
 
-        Arduino.getInstance().setConnectionStatusListener(new Arduino.ConnectionStatusChangeListener()
-        {
-            @Override
-            public void statusChanged()
+        Arduino.getInstance().setConnectionStatusListener(() -> {
+            if (Arduino.getInstance().getConnectionStatus())
             {
-                if (Arduino.getInstance().getConnectionStatus())
-                {
-                    status.setText("Connected to LEDs");
-                    status.setForeground(Color.GRAY);
-                } else
-                {
-                    status.setText("Not Connected to LEDs");
-                    status.setForeground(Color.RED);
-                }
+                status.setText("Connected to LEDs");
+                status.setForeground(Color.GRAY);
+            } else
+            {
+                status.setText("Not Connected to LEDs");
+                status.setForeground(Color.RED);
             }
         });
         Arduino.getInstance().initialize();
@@ -132,48 +119,55 @@ public class Frame extends JFrame implements WindowListener
 
     private void setupNetworkListener()
     {
-        Network.getInstance().setConnectionListener(new Network.ConnectionListener()
-        {
-            @Override
-            public void onConnectionStateChanged(boolean state)
+        Network.getInstance().setConnectionListener(state -> {
+            connected = state;
+            if(connectingToFieldBox.isSelected())
             {
-                connected = state;
-                if(connectingToFieldBox.isSelected())
-                {
-                    if(state)
-                    {
-                        sendConnectedCommand();
-                    }
-                    else
-                    {
-                        sendDisconnectedCommand();
-                    }
-                }
-            }
-        });
-        Network.getInstance().setOnMessageReceivedListener(new Network.OnMessageReceivedListener() {
-            @Override
-            public void onMessageReceived(String key, Object value) {
-                try {
-                    currentState = Network.getInstance().getString("ArduinoState");
-                } catch (Exception e) {
-
-                }
-
-                int arduinoArgument = 0;
-                try {
-                    arduinoArgument = (int) ((double) Network.getInstance().getNumber("ArduinoArgument"));
-                } catch (Exception e) {
-
-                }
-                if (currentState.equals("SCORING"))
-                    sendScoreCommand();
-                else if (currentState.equals("OFF"))
+                if(state)
                 {
                     sendConnectedCommand();
                 }
-                else if (currentState.equals("COUNTDOWN"))
+                else
+                {
+                    sendDisconnectedCommand();
+                }
+            }
+        });
+        Network.getInstance().setOnMessageReceivedListener((key, value) -> {
+            diagram = Network.getInstance().getNetworkSubTable("Robot Diagram");
+            currentState = Network.getInstance().getString("ArduinoState");
+
+            double hoodPos =  diagram.getNumber("Hood Position");
+            double armAngle = diagram.getNumber("Intake Arm Position");
+            boolean rollIntake = diagram.getBoolean("Intake Roller Running");
+            boolean rollLoader = diagram.getBoolean("Loader Roller Running");
+            double shooterMove = diagram.getNumber("Shooter Percent");
+            boolean shooterFull = diagram.getBoolean("Shooter Full Speed");
+            boolean ballIntake = diagram.getBoolean("Ball In Intake");
+            boolean ballLoader = diagram.getBoolean("Ball In Loader");
+
+            sendHoodCommand(hoodPos);
+            sendArmAngleCommand(armAngle);
+            sendRollIntakeCommand(rollIntake);
+            sendRollLoaderCommand(rollLoader);
+            sendShooterMoveCommand(shooterMove);
+            sendShooterFullCommand(shooterFull);
+            sendBallIntakeCommand(ballIntake);
+            sendBallLoaderCommand(ballLoader);
+
+
+            int arduinoArgument = 0;
+            arduinoArgument = (int) ((double) Network.getInstance().getNumber("ArduinoArgument"));
+            switch (currentState) {
+                case "SCORING":
+                    sendScoreCommand();
+                    break;
+                case "OFF":
+                    sendConnectedCommand();
+                    break;
+                case "COUNTDOWN":
                     sendCountdownCommand(arduinoArgument);
+                    break;
             }
         });
 
@@ -182,33 +176,49 @@ public class Frame extends JFrame implements WindowListener
 
     private void sendScoreCommand()
     {
-        Arduino.getInstance().sendMessage("3 0:");
+        Arduino.getInstance().sendMessage("[3 0:");
     }
 
     private void sendOffCommand()
     {
-        Arduino.getInstance().sendMessage("0 0:");
+        Arduino.getInstance().sendMessage("[0 0:");
     }
 
     private void sendRainbowCommand()
     {
-        Arduino.getInstance().sendMessage("1 0:");
+        Arduino.getInstance().sendMessage("[1 0:");
     }
 
     private void sendCountdownCommand(int amount)
     {
-        Arduino.getInstance().sendMessage("2 " + amount + ":");
+        Arduino.getInstance().sendMessage("[2 " + amount + ":");
     }
 
     public void sendConnectedCommand()
     {
-        Arduino.getInstance().sendMessage("5 0:");
+        Arduino.getInstance().sendMessage("[5 0:");
     }
 
     public void sendDisconnectedCommand()
     {
-        Arduino.getInstance().sendMessage("4 0:");
+        Arduino.getInstance().sendMessage("[4 0:");
     }
+
+    public void sendArmAngleCommand(double armAngle) { Arduino.getInstance().sendMessage(">0 " + Math.round(armAngle) + ":");}
+
+    public void sendHoodCommand(double hoodPos) { Arduino.getInstance().sendMessage(">1 " + Math.round(hoodPos) + ":");}
+
+    public void sendRollIntakeCommand(boolean rollIntake) { Arduino.getInstance().sendMessage(">2 " + (rollIntake ? 1 : 0)+ ":");}
+
+    public void sendRollLoaderCommand(boolean rollLoader) { Arduino.getInstance().sendMessage(">3 " + (rollLoader ? 1 : 0)+ ":");}
+
+    public void sendShooterMoveCommand(double shooterMove) { Arduino.getInstance().sendMessage(">4 " + Math.round(shooterMove*100) + ":");} //Gives the value as an int from 0 to 100
+
+    public void sendShooterFullCommand(boolean shooterFull) { Arduino.getInstance().sendMessage(">5 " + (shooterFull ? 1 : 0)+ ":");}
+
+    public void sendBallIntakeCommand(boolean ballIntake) { Arduino.getInstance().sendMessage(">6 " + (ballIntake ? 1 : 0)+ ":");}
+
+    public void sendBallLoaderCommand(boolean ballLoader) { Arduino.getInstance().sendMessage(">7 " + (ballLoader ? 1 : 0)+ ":");}
 
     @Override
     public void windowOpened(WindowEvent e)
