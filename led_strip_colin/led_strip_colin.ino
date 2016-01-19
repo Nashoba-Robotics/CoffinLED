@@ -20,6 +20,26 @@ int INFO_SHOOTER_FULL = 5;
 int INFO_BALL_INTAKE = 6;
 int INFO_BALL_LOADER = 7;
 
+int LED_ARM_ONE = -1;
+int LED_ARM_TWO = -1;
+int LED_ARM_THREE = -1;
+int LED_HOOD_ONE = -1;
+int LED_HOOD_TWO = -1;
+int LED_HOOD_THREE = -1;
+int LED_ROLL_INTAKE_ON = -1;
+int LED_ROLL_INTAKE_OFF = -1;
+int LED_ROLL_LOADER_ON = -1;
+int LED_ROLL_LOADER_OFF = -1;
+int LED_SHOOTER_MOVE_ONE = -1;
+int LED_SHOOTER_MOVE_TWO = -1;
+int LED_SHOOTER_MOVE_THREE = -1;
+int LED_SHOOTER_MOVE_FOUR = -1;
+int LED_SHOOTER_MOVE_FIVE = -1;
+int LED_SHOOTER_FULL_ON = -1;
+int LED_SHOOTER_FULL_OFF = -1;
+int LED_BALL_INTAKE = -1;
+int LED_BALL_LOADER = -1;
+
 int dataPin = 4;
 int clockPin = 2;
 LPD8806 strip = LPD8806(32, dataPin, clockPin);
@@ -42,6 +62,27 @@ void setup()
 
   // Update the strip, to start they are all 'off'
   strip.show();
+
+  //Add all the LEDs as outputs
+  pinmode(LED_ARM_ONE, OUTPUT);
+  pinmode(LED_ARM_TWO, OUTPUT);
+  pinmode(LED_ARM_THREE, OUTPUT);
+  pinmode(LED_HOOD_ONE, OUTPUT);
+  pinmode(LED_HOOD_TWO, OUTPUT);
+  pinmode(LED_HOOD_THREE, OUTPUT);
+  pinmode(LED_ROLL_INTAKE_ON, OUTPUT);
+  pinmode(LED_ROLL_INTAKE_OFF, OUTPUT);
+  pinmode(LED_ROLL_LOADER_ON, OUTPUT);
+  pinmode(LED_ROLL_LOADER_OFF, OUTPUT);
+  pinmode(LED_SHOOTER_MOVE_ONE, OUTPUT);
+  pinmode(LED_SHOOTER_MOVE_TWO, OUTPUT);
+  pinmode(LED_SHOOTER_MOVE_THREE, OUTPUT);
+  pinmode(LED_SHOOTER_MOVE_FOUR, OUTPUT);
+  pinmode(LED_SHOOTER_MOVE_FIVE, OUTPUT);
+  pinmode(LED_SHOOTER_FULL_ON, OUTPUT);
+  pinmode(LED_SHOOTER_FULL_OFF, OUTPUT);
+  pinmode(LED_BALL_INTAKE, OUTPUT);
+  pinmode(LED_BALL_LOADER, OUTPUT);
 }
 
 void loop() 
@@ -118,21 +159,117 @@ void loop()
 }
 
 //TODO: Set all of these
-void armAngle(int angle) {}
+void armAngle(int angle) {
+  if(angle < 20) {
+    digitalWrite(LED_ARM_ONE, HIGH);
+    digitalWrite(LED_ARM_TWO, LOW);
+    digitalWrite(LED_ARM_THREE, LOW);
+  } else if(angle < 40) {
+    digitalWrite(LED_ARM_ONE, LOW);
+    digitalWrite(LED_ARM_TWO, HIGH);
+    digitalWrite(LED_ARM_THREE, LOW);
+  } else {
+    digitalWrite(LED_ARM_ONE, LOW);
+    digitalWrite(LED_ARM_TWO, LOW);
+    digitalWrite(LED_ARM_THREE, HIGH);
+  }
+}
 
-void hood(int angle) {}
+void hood(int angle) {
+  if(angle < 20) {
+    digitalWrite(LED_HOOD_ONE, HIGH);
+    digitalWrite(LED_HOOD_TWO, LOW);
+    digitalWrite(LED_HOOD_THREE, LOW);
+  } else if(angle < 40) {
+    digitalWrite(LED_HOOD_ONE, LOW);
+    digitalWrite(LED_HOOD_TWO, HIGH);
+    digitalWrite(LED_HOOD_THREE, LOW);
+  } else {
+    digitalWrite(LED_HOOD_ONE, LOW);
+    digitalWrite(LED_HOOD_TWO, LOW);
+    digitalWrite(LED_HOOD_THREE, HIGH);
+  }
+}
 
-void rollIntake(int on) {}
+void rollIntake(int on) {
+  if(on == 1) {
+    digitalWrite(LED_ROLL_INTAKE_ON, HIGH);
+    digitalWrite(LED_ROLL_INTAKE_OFF, LOW);
+  } else {
+    digitalWrite(LED_ROLL_INTAKE_OFF, HIGH);
+    digitalWrite(LED_ROLL_INTAKE_ON, LOW);
+  }
+}
 
-void rollLoader(int on) {}
+void rollLoader(int on) {
+  if(on == 1) {
+    digitalWrite(LED_ROLL_LOADER_ON, HIGH);
+    digitalWrite(LED_ROLL_LOADER_OFF, LOW);
+  } else {
+    digitalWrite(LED_ROLL_LOADER_OFF, HIGH);
+    digitalWrite(LED_ROLL_LOADER_ON, LOW);
+  }
+}
 
-void shooterMove(int percent) {}//Percent from 1 to 100
+void shooterMove(int percent) {
+  if(percent < 20) {
+    digitalWrite(LED_SHOOTER_MOVE_ONE, HIGH);
+    digitalWrite(LED_SHOOTER_MOVE_TWO, LOW);
+    digitalWrite(LED_SHOOTER_MOVE_THREE, LOW);
+    digitalWrite(LED_SHOOTER_MOVE_FOUR, LOW);
+    digitalWrite(LED_SHOOTER_MOVE_FIVE, LOW);
+  } else if(percent < 40) {
+    digitalWrite(LED_SHOOTER_MOVE_ONE, LOW);
+    digitalWrite(LED_SHOOTER_MOVE_TWO, HIGH);
+    digitalWrite(LED_SHOOTER_MOVE_THREE, LOW);
+    digitalWrite(LED_SHOOTER_MOVE_FOUR, LOW);
+    digitalWrite(LED_SHOOTER_MOVE_FIVE, LOW);
+  } else if(percent < 60) {
+    digitalWrite(LED_SHOOTER_MOVE_ONE, LOW);
+    digitalWrite(LED_SHOOTER_MOVE_TWO, LOW);
+    digitalWrite(LED_SHOOTER_MOVE_THREE, HIGH);
+    digitalWrite(LED_SHOOTER_MOVE_FOUR, LOW);
+    digitalWrite(LED_SHOOTER_MOVE_FIVE, LOW);
+  } else if(percent < 80) {
+    digitalWrite(LED_SHOOTER_MOVE_ONE, LOW);
+    digitalWrite(LED_SHOOTER_MOVE_TWO, LOW);
+    digitalWrite(LED_SHOOTER_MOVE_THREE, LOW);
+    digitalWrite(LED_SHOOTER_MOVE_FOUR, HIGH);
+    digitalWrite(LED_SHOOTER_MOVE_FIVE, LOW);
+  } else  {
+    digitalWrite(LED_SHOOTER_MOVE_ONE, LOW);
+    digitalWrite(LED_SHOOTER_MOVE_TWO, LOW);
+    digitalWrite(LED_SHOOTER_MOVE_THREE, LOW);
+    digitalWrite(LED_SHOOTER_MOVE_FOUR, LOW);
+    digitalWrite(LED_SHOOTER_MOVE_FIVE, HIGH);
+  }
+}//Percent from 1 to 100
 
-void shooterFull(int on) {}
+void shooterFull(int on) {
+  if(on == 1) {
+    digitalWrite(LED_SHOOTER_FULL_ON, HIGH);
+    digitalWrite(LED_SHOOTER_FULL_OFF, LOW);
+  } else {
+    digitalWrite(LED_SHOOTER_FULL_OFF, HIGH);
+    digitalWrite(LED_SHOOTER_FULL_ON, LOW);
+  }
+}
 
-void ballIntake(int on) {}
+void ballIntake(int on) {
+  if(on == 1) {
+    digitalWrite(LED_BALL_INTAKE, HIGH);
+  } else {
+    digitalWrite(LED_BALL_INTAKE, LOW);
+  }
+}
 
-void ballLoader(int on) {}
+void ballLoader(int on) {
+  if(on == 1) {
+    digitalWrite(LED_BALL_LOADER, HIGH);
+  } else {
+    digitalWrite(LED_BALL_LOADER, LOW);
+  }
+}
 
 uint16_t rainbowState = 0;
 void rainbowCycle(uint8_t wait)
