@@ -11,6 +11,7 @@ int STATE_SPLIT_STRIP = 2;
 int STATE_SCORE_YO = 3;
 int STATE_DISCONNECTED = 4;
 int STATE_CONNECTED = 5;
+int STATE_BOUNCE = 6;
 
 int dataPin = 4;
 int clockPin = 2;
@@ -69,6 +70,10 @@ void loop()
   {
     connectedLight();
   }
+  else if(state == STATE_BOUNCE)
+  {
+   bounce(); 
+  }
 }
 
 uint16_t rainbowState = 0;
@@ -105,7 +110,11 @@ void disconnectedLight()
     strip.setPixelColor(i, strip.Color(0, 0, 0)); 
   }
   strip.setPixelColor(0, strip.Color(127, 0, 0));
+  strip.setPixelColor(1, strip.Color(127, 0, 0));
+  strip.setPixelColor(2, strip.Color(127, 0, 0));
   strip.setPixelColor(strip.numPixels()-1, strip.Color(127, 0, 0));
+  strip.setPixelColor(strip.numPixels()-2, strip.Color(127, 0, 0));
+  strip.setPixelColor(strip.numPixels()-3, strip.Color(127, 0, 0));
   strip.show();
 }
 
@@ -117,7 +126,11 @@ void connectedLight()
     strip.setPixelColor(i, strip.Color(0, 0, 0)); 
   }
   strip.setPixelColor(0, strip.Color(0, 127, 0));
+  strip.setPixelColor(1, strip.Color(0, 127, 0));
+  strip.setPixelColor(2, strip.Color(0, 127, 0));
   strip.setPixelColor(strip.numPixels()-1, strip.Color(0, 127, 0));
+  strip.setPixelColor(strip.numPixels()-2, strip.Color(0, 127, 0));
+  strip.setPixelColor(strip.numPixels()-3, strip.Color(0, 127, 0));
   strip.show();
 }
 
@@ -149,6 +162,46 @@ void splitStrip(int amount)
   for(i = strip.numPixels(); i > strip.numPixels()-amount-1; i--)
   {
    strip.setPixelColor(i, color); 
+  }
+  strip.show();
+}
+
+int bounceState = 0;
+int bounceDirection = 1;
+int bounceCount = 0;
+uint32_t bounceColors[] = {strip.Color(127, 127, 127), strip.Color(127, 0, 0),strip.Color(0, 127, 0), strip.Color(0, 0, 127)};
+int colorIndex = 0;
+void bounce()
+{
+  uint16_t i;
+  for(i = 0; i < strip.numPixels(); i++)
+  {
+    strip.setPixelColor(i, strip.Color(0, 0, 0)); 
+  }
+  
+  bounceCount++;
+  if(bounceCount > 30)
+  {
+    if(bounceState + bounceDirection >= strip.numPixels()+10
+    || bounceState + bounceDirection < 0)
+    {
+      if(bounceState = 1)
+      {
+        colorIndex = (colorIndex+1)% (4);
+      }
+      bounceState = 0;
+    }
+  
+    bounceState += bounceDirection;
+    bounceCount = 0;
+  }
+  if(bounceState < 16)
+  {
+    strip.setPixelColor(bounceState, bounceColors[colorIndex]);
+  }
+  if(bounceState > 26)
+  {
+    strip.setPixelColor(bounceState-10, bounceColors[colorIndex]);
   }
   strip.show();
 }

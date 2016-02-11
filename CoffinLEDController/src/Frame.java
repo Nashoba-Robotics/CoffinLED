@@ -27,7 +27,7 @@ public class Frame extends JFrame implements WindowListener
     JComboBox<String> selection;
     JCheckBox connectingToFieldBox;
 
-    private final String[] LED_OPTIONS = {"Rainbow", "Off"};
+    private final String[] LED_OPTIONS = {"Off", "Rainbow", "Bounce", "Score"};
 
     private Frame()
     {
@@ -74,7 +74,8 @@ public class Frame extends JFrame implements WindowListener
                         sendDisconnectedCommand();
                         Frame.getInstance().setTitle("Coffin Controller - Not Connected to Field");
                     }
-                } else
+                }
+                else
                 {
                     selection.setEnabled(true);
                     setTitle("Coffin Controller");
@@ -122,12 +123,25 @@ public class Frame extends JFrame implements WindowListener
         String current = (String)selection.getSelectedItem();
         if(current.equals(LED_OPTIONS[0]))
         {
-            sendRainbowCommand();
+            sendOffCommand();
         }
         else if(current.equals(LED_OPTIONS[1]))
         {
-            sendOffCommand();
+            sendRainbowCommand();
         }
+        else if(current.equals(LED_OPTIONS[2]))
+        {
+            sendBounceCommand();
+        }
+        else if(current.equals(LED_OPTIONS[3]))
+        {
+            sendScoreCommand();
+        }
+    }
+
+    private void sendBounceCommand()
+    {
+        Arduino.getInstance().sendMessage("6 0:");
     }
 
     private void setupNetworkListener()
@@ -166,14 +180,17 @@ public class Frame extends JFrame implements WindowListener
                 } catch (Exception e) {
 
                 }
-                if (currentState.equals("Score"))
-                    sendScoreCommand();
-                else if (currentState.equals("Off"))
+                if(connectingToFieldBox.isSelected())
                 {
-                    sendConnectedCommand();
+                    if (currentState.equals("Score"))
+                        sendScoreCommand();
+                    else if (currentState.equals("Off"))
+                    {
+                        sendConnectedCommand();
+                    }
+                    else if (currentState.equals("Countdown"))
+                        sendCountdownCommand(arduinoArgument);
                 }
-                else if (currentState.equals("Countdown"))
-                    sendCountdownCommand(arduinoArgument);
             }
         });
 
