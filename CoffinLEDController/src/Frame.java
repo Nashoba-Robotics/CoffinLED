@@ -115,7 +115,7 @@ public class Frame extends JFrame implements WindowListener
         setVisible(true);
     }
 
-    private String currentState = "off";
+    private String currentState = "OFF";
     private boolean connected = false;
 
     private void updateLEDSelection()
@@ -192,7 +192,7 @@ public class Frame extends JFrame implements WindowListener
                         sendCountdownCommand(arduinoArgument);
                 }
             }
-        });
+	});
 
         Network.getInstance().connect();
     }
